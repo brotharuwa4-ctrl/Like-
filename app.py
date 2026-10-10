@@ -14,13 +14,18 @@ from google.protobuf.message import DecodeError
 
 app = Flask(__name__)
 
-# --- ප්‍රධාන පිටුව සඳහා නව Route එක (404 Error එක නැවැත්වීමට) ---
+# --- ස්ථාවරව ලබා දී ඇති විස්තර ---
+DEFAULT_UID = "11586324541"
+DEFAULT_SERVER = "SG"
+
 @app.route('/', methods=['GET'])
 def home():
     return jsonify({
         "status": "online",
         "message": "Free Fire Like API is running successfully on Render!",
-        "usage": "/like?uid=YOUR_UID&server_name=YOUR_SERVER"
+        "target_uid": DEFAULT_UID,
+        "target_server": DEFAULT_SERVER,
+        "usage": "Visit /like to send likes automatically to the default UID."
     }), 200
 
 def load_tokens(server_name):
@@ -191,10 +196,9 @@ def fetch_player_info(uid):
 
 @app.route('/like', methods=['GET'])
 def handle_requests():
-    uid = request.args.get("uid")
-    server_name = request.args.get("server_name", "").upper()
-    if not uid or not server_name:
-        return jsonify({"error": "UID and server_name are required"}), 400
+    # ස්ථාවරව සකස් කළ UID සහ Server එක භාවිතා කරයි
+    uid = request.args.get("uid", DEFAULT_UID)
+    server_name = request.args.get("server_name", DEFAULT_SERVER).upper()
 
     try:
         def process_request():
@@ -204,7 +208,6 @@ def handle_requests():
             release_version = player_info["ReleaseVersion"]
 
             if region != "NA" and server_name != region:
-                app.logger.warning(f"Server name {server_name} does not match API region {region}. Using API region.")
                 server_name_used = region
             else:
                 server_name_used = server_name
@@ -230,7 +233,6 @@ def handle_requests():
                 before_like = int(before_like)
             except Exception:
                 before_like = 0
-            app.logger.info(f"Likes before command: {before_like}")
 
             if server_name_used == "IND":
                 url = "https://client.ind.freefiremobile.com/LikeProfile"
