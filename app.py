@@ -14,6 +14,15 @@ from google.protobuf.message import DecodeError
 
 app = Flask(__name__)
 
+# --- ප්‍රධාන පිටුව සඳහා නව Route එක (404 Error එක නැවැත්වීමට) ---
+@app.route('/', methods=['GET'])
+def home():
+    return jsonify({
+        "status": "online",
+        "message": "Free Fire Like API is running successfully on Render!",
+        "usage": "/like?uid=YOUR_UID&server_name=YOUR_SERVER"
+    }), 200
+
 def load_tokens(server_name):
     try:
         if server_name == "IND":
@@ -189,13 +198,11 @@ def handle_requests():
 
     try:
         def process_request():
-            # Fetch player info from the new API
             player_info = fetch_player_info(uid)
             region = player_info["Region"]
             level = player_info["Level"]
             release_version = player_info["ReleaseVersion"]
 
-            # Validate server_name against region from API
             if region != "NA" and server_name != region:
                 app.logger.warning(f"Server name {server_name} does not match API region {region}. Using API region.")
                 server_name_used = region
